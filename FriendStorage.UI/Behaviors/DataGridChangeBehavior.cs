@@ -58,7 +58,7 @@ namespace FriendStorage.UI.Behaviors
 	    {
 		    var baseStyle = dataGrid.FindResource(typeof(TextBox)) as Style;
 		    var style = new Style(typeof(TextBox), baseStyle);
-		    AddSetters(style, bindingPath);
+		    AddSetters(style, bindingPath, dataGrid);
 		    return style;
 	    }
 
@@ -66,11 +66,11 @@ namespace FriendStorage.UI.Behaviors
 	    {
 		    var baseStyle = dataGrid.FindResource("TextBlockBaseStyle") as Style;
 		    var style = new Style(typeof(TextBlock), baseStyle);
-		    AddSetters(style, bindingPath);
+		    AddSetters(style, bindingPath, dataGrid);
 		    return style;
 	    }
 
-	    private static void AddSetters(Style style, string bindingPath)
+	    private static void AddSetters(Style style, string bindingPath, DataGrid dataGrid)
 	    {
 		    style.Setters.Add(new Setter(ChangeBehavior.IsActiveProperty, false));
 
@@ -79,6 +79,9 @@ namespace FriendStorage.UI.Behaviors
 
 			style.Setters.Add(new Setter(ChangeBehavior.OriginalValueProperty,
 				new Binding(bindingPath + "OriginalValue")));
+
+		    style.Setters.Add(new Setter(Validation.ErrorTemplateProperty,
+			    dataGrid.FindResource("ErrorInsideErrorTemplate")));
 	    }
     }
 }

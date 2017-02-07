@@ -49,14 +49,18 @@
 				  Path=Content.Friend.IsChanged}" Value="True">
 				  <Setter Property="Background" Value="{StaticResource IsChangedBackgroundBrush}" />
 			  </DataTrigger>
+			  <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self},
+				  Path=Content.Friend.IsValid}" Value="False">
+				  <Setter Property="Background" Value="{StaticResource HasErrorBackgroundBrush}" />
+			  </DataTrigger>
           </Style.Triggers>
         </Style>
       </TabControl.ItemContainerStyle>
       <TabControl.ItemTemplate>
         <DataTemplate>
           <StackPanel Orientation="Horizontal">
-            <TextBlock Text="{Binding Friend.FirstName}"/>
-            <TextBlock Text="{Binding Friend.LastName}" Margin="5 0 20 0"/>
+            <TextBlock Text="{Binding Friend.FirstName, ValidatesOnNotifyDataErrors=False}"/>
+			<TextBlock Text="{Binding Friend.LastName, ValidatesOnNotifyDataErrors=False}" Margin="5 0 20 0"/>
             <Button Content="X" Command="{Binding RelativeSource=
                                   {RelativeSource FindAncestor,
                                   AncestorType={x:Type TabControl}},

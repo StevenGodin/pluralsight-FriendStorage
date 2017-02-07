@@ -2,6 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   
     <SolidColorBrush x:Key="IsChangedBackgroundBrush" Color="SteelBlue" />
+	<SolidColorBrush x:Key="HasErrorBackgroundBrush" Color="LightCoral" />
     
   <!--Override of SystemColors for DataGrid and ComboBox selection-->
   <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#999999"/>

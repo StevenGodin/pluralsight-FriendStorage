@@ -14,7 +14,8 @@
   </Style>
 
   <Style TargetType="DataGrid">
-    <Setter Property="Background" Value="{StaticResource DefaultBackgroundBrush}"/>
+		<Setter Property="Validation.ErrorTemplate" Value="{StaticResource DefaultErrorTemplate}" />
+		<Setter Property="Background" Value="{StaticResource DefaultBackgroundBrush}"/>
     <Setter Property="AutoGenerateColumns" Value="False"/>
     <Setter Property="CanUserAddRows" Value="False"/>
     <Setter Property="CanUserDeleteRows" Value="False"/>
