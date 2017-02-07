@@ -92,5 +92,35 @@ namespace FriendStorage.UITests.Wrapper
 			Assert.IsTrue(fired);
 		}
 
+		[TestMethod]
+		public void ShouldSetErrorsAndIsValidAfterInitialization()
+		{
+			_friend.FirstName = "";
+			var wrapper = new FriendWrapper(_friend);
+
+			Assert.IsFalse(wrapper.IsValid);
+			Assert.IsTrue(wrapper.HasErrors);
+
+			var errors = wrapper.GetErrors(nameof(wrapper.FirstName)).Cast<string>().ToList();
+			Assert.AreEqual(1, errors.Count);
+		}
+
+		[TestMethod]
+		public void ShouldRefreshErrorsAndIsValidWhenRejectingChanges()
+		{
+			var wrapper = new FriendWrapper(_friend);
+			Assert.IsTrue(wrapper.IsValid);
+			Assert.IsFalse(wrapper.HasErrors);
+
+			wrapper.FirstName = "";
+
+			Assert.IsFalse(wrapper.IsValid);
+			Assert.IsTrue(wrapper.HasErrors);
+
+			wrapper.RejectChanges();
+
+			Assert.IsTrue(wrapper.IsValid);
+			Assert.IsFalse(wrapper.HasErrors);
+		}
 	}
 }

@@ -1,4 +1,5 @@
-﻿using FriendStorage.Model;
+﻿using System.ComponentModel.DataAnnotations;
+using FriendStorage.Model;
 
 namespace FriendStorage.UI.Wrapper
 {
@@ -18,6 +19,7 @@ namespace FriendStorage.UI.Wrapper
 
         public bool IdIsChanged => GetIsChanged(nameof(Id));
 
+		[Required(ErrorMessage = "City is required")]
         public string City
         {
             get { return GetValue<string>(); }

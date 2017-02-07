@@ -9,24 +9,35 @@ using FriendStorage.UI.ViewModel;
 
 namespace FriendStorage.UI.Wrapper
 {
-    public class ModelWrapper<T> : NotifyDataErrorInfoBase, IRevertibleChangeTracking
+    public class ModelWrapper<T> : NotifyDataErrorInfoBase, IValidatableTrackingObject, IValidatableObject
     {
         private readonly Dictionary<string, object> _originalValues;
-        private readonly List<IRevertibleChangeTracking> _trackingObjects;
+        private readonly List<IValidatableTrackingObject> _trackingObjects;
 
         public ModelWrapper(T model)
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
             Model = model;
             _originalValues = new Dictionary<string, object>();
-            _trackingObjects = new List<IRevertibleChangeTracking>();
+            _trackingObjects = new List<IValidatableTrackingObject>();
+			InitializeComplexProperties(model);
+			InitializeCollectionProperties(model);
+			Validate();
         }
 
-        public T Model { get; }
+	    protected virtual void InitializeComplexProperties(T model)
+	    {
+	    }
+
+	    protected virtual void InitializeCollectionProperties(T model)
+	    {
+	    }
+
+	    public T Model { get; }
 
         public bool IsChanged => _originalValues.Any() || _trackingObjects.Any(t => t.IsChanged);
 
-	    public bool IsValid => !HasErrors;
+	    public bool IsValid => !HasErrors && _trackingObjects.All(t => t.IsValid);
 
         public void AcceptChanges()
         {
@@ -46,6 +57,7 @@ namespace FriendStorage.UI.Wrapper
             foreach (var trackingObject in _trackingObjects)
                 trackingObject.RejectChanges();
 
+			Validate();
             OnPropertyChanged("");
         }
 
@@ -78,29 +90,32 @@ namespace FriendStorage.UI.Wrapper
             if (Equals(currentValue, newValue)) return;
             UpdateOriginalValue(currentValue, newValue, propertyName);
             propertyInfo.SetValue(Model, newValue);
-	        ValidateProperty(propertyName, newValue);
+	        Validate();
             OnPropertyChanged(propertyName);
             OnPropertyChanged(propertyName + "IsChanged");
         }
 
-	    private void ValidateProperty(string propertyName, object newValue)
+	    private void Validate()
 	    {
+		    ClearErrors();
+
 		    var results = new List<ValidationResult>();
-		    var context = new ValidationContext(this) {MemberName = propertyName};
-		    Validator.TryValidateProperty(newValue, context, results);
+		    var context = new ValidationContext(this);
+		    Validator.TryValidateObject(this, context, results, true);
 		    if (results.Any())
 		    {
-			    Errors[propertyName] = results.Select(r => r.ErrorMessage).Distinct().ToList();
-			    OnErrorsChanged(propertyName);
-			    OnPropertyChanged(nameof(IsValid));
+			    var propertyNames = results.SelectMany(r => r.MemberNames).Distinct().ToList();
+
+			    foreach (var propertyName in propertyNames)
+			    {
+					Errors[propertyName] = results
+						.Where(r => r.MemberNames.Contains(propertyName))
+						.Select(r => r.ErrorMessage).Distinct().ToList();
+					OnErrorsChanged(propertyName);
+			    }
 		    }
-		    else if (Errors.ContainsKey(propertyName))
-			{
-				Errors.Remove(propertyName);
-				OnErrorsChanged(propertyName);
-				OnPropertyChanged(nameof(IsValid));
-			}
-	    }
+			OnPropertyChanged(nameof(IsValid));
+		}
 
 	    private void UpdateOriginalValue(object currentValue, object newValue, string propertyName)
         {
@@ -124,6 +139,7 @@ namespace FriendStorage.UI.Wrapper
             {
                 modelCollection.Clear();
                 modelCollection.AddRange(wrapperCollection.Select(w => w.Model));
+	            Validate();
             };
             RegisterTrackingObjects(wrapperCollection);
         }
@@ -133,8 +149,7 @@ namespace FriendStorage.UI.Wrapper
             RegisterTrackingObjects(wrapper);
         }
 
-        private void RegisterTrackingObjects<TTrackingObject>(TTrackingObject trackingObject)
-            where TTrackingObject : IRevertibleChangeTracking, INotifyPropertyChanged
+        private void RegisterTrackingObjects(IValidatableTrackingObject trackingObject)
         {
             if (_trackingObjects.Contains(trackingObject)) return;
 
@@ -143,8 +158,14 @@ namespace FriendStorage.UI.Wrapper
             {
                 if (e.PropertyName == nameof(IsChanged))
                     OnPropertyChanged(nameof(IsChanged));
+				else if (e.PropertyName == nameof(IsValid))
+		            OnPropertyChanged(nameof(IsValid));
             };
         }
 
+	    public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+	    {
+		    yield break;
+	    }
     }
 }

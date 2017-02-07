@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -10,11 +11,9 @@ namespace FriendStorage.UI.Wrapper
     {
         public FriendWrapper(Friend model) : base(model)
         {
-            InitializeComplexProperties(model);
-            InitializeCollectionProperties(model);
         }
 
-        private void InitializeComplexProperties(Friend model)
+        protected override void InitializeComplexProperties(Friend model)
         {
             if (model.Address == null)
                 throw new ArgumentException("Address cannot be null");
@@ -22,7 +21,7 @@ namespace FriendStorage.UI.Wrapper
             RegisterComplex(Address);
         }
 
-        private void InitializeCollectionProperties(Friend model)
+        protected override void InitializeCollectionProperties(Friend model)
         {
             if (model.Emails == null)
                 throw new ArgumentException("Emails cannot be null");
@@ -51,7 +50,6 @@ namespace FriendStorage.UI.Wrapper
 
         public bool FriendGroupIdIsChanged => GetIsChanged(nameof(FriendGroupId));
 
-		[Required(ErrorMessage = "Firstname is required")]
         public string FirstName
         {
             get { return GetValue<string>(); }
@@ -96,5 +94,16 @@ namespace FriendStorage.UI.Wrapper
 
         public ChangeTrackingCollection<FriendEmailWrapper> Emails { get; private set; }
 
+	    public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+	    {
+			if (string.IsNullOrWhiteSpace(FirstName))
+				yield return new ValidationResult("Firstname is required", new [] { nameof(FirstName)});
+
+		    if (IsDeveloper && Emails.Count == 0)
+		    {
+			    yield return new ValidationResult("A developer must have an email-address",
+					new [] {nameof(IsDeveloper), nameof(Emails)});
+		    }
+	    }
     }
 }

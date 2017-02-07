@@ -1,4 +1,5 @@
-﻿using FriendStorage.Model;
+﻿using System.ComponentModel.DataAnnotations;
+using FriendStorage.Model;
 
 namespace FriendStorage.UI.Wrapper
 {
@@ -18,6 +19,8 @@ namespace FriendStorage.UI.Wrapper
 
         public bool IdIsChanged => GetIsChanged(nameof(Id));
 
+		[Required(ErrorMessage = "Email is required")]
+		[EmailAddress(ErrorMessage = "Email is not a valid email address")]
         public string Email
         {
             get { return GetValue<string>(); }

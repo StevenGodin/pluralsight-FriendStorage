@@ -6,8 +6,8 @@ using System.Linq;
 
 namespace FriendStorage.UI.Wrapper
 {
-    public class ChangeTrackingCollection<T> : ObservableCollection<T>, IRevertibleChangeTracking
-        where T : class, IRevertibleChangeTracking, INotifyPropertyChanged
+    public class ChangeTrackingCollection<T> : ObservableCollection<T>, IValidatableTrackingObject
+        where T : class, IValidatableTrackingObject
     {
         private IList<T> _originalCollection;
 
@@ -52,6 +52,7 @@ namespace FriendStorage.UI.Wrapper
 
             base.OnCollectionChanged(e);
             OnPropertyChanged(new PropertyChangedEventArgs(nameof(IsChanged)));
+			OnPropertyChanged(new PropertyChangedEventArgs(nameof(IsValid)));
         }
 
         private void AttachItemPropertyChangedHandler(IEnumerable<T> items)
@@ -66,26 +67,33 @@ namespace FriendStorage.UI.Wrapper
                 item.PropertyChanged -= ItemPropertyChanged;
         }
 
-        private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            var item = (T) sender;
-            if (_addedItems.Contains(item))
-                return;
+	    private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+	    {
+		    if (e.PropertyName == nameof(IsValid))
+		    {
+			    OnPropertyChanged(new PropertyChangedEventArgs(nameof(IsValid)));
+		    }
+		    else
+		    {
+			    var item = (T) sender;
+			    if (_addedItems.Contains(item))
+				    return;
 
-            if (item.IsChanged)
-            {
-                if (!_modifiedItems.Contains(item))
-                    _modifiedItems.Add(item);
-            }
-            else
-            {
-                if (_modifiedItems.Contains(item))
-                    _modifiedItems.Remove(item);
-            }
-            OnPropertyChanged(new PropertyChangedEventArgs(nameof(IsChanged)));
-        }
+			    if (item.IsChanged)
+			    {
+				    if (!_modifiedItems.Contains(item))
+					    _modifiedItems.Add(item);
+			    }
+			    else
+			    {
+				    if (_modifiedItems.Contains(item))
+					    _modifiedItems.Remove(item);
+			    }
+			    OnPropertyChanged(new PropertyChangedEventArgs(nameof(IsChanged)));
+		    }
+	    }
 
-        private void UpdateObservableCollection(ObservableCollection<T> collection, List<T> items)
+	    private void UpdateObservableCollection(ObservableCollection<T> collection, List<T> items)
         {
             collection.Clear();
             foreach (var item in items)
@@ -94,7 +102,9 @@ namespace FriendStorage.UI.Wrapper
 
         public bool IsChanged => AddedItems.Any() || RemovedItems.Any() || ModifiedItems.Any();
 
-        public void AcceptChanges()
+		public bool IsValid => this.All(t => t.IsValid);
+
+		public void AcceptChanges()
         {
             _addedItems.Clear();
             _modifiedItems.Clear();
